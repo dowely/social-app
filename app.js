@@ -1,6 +1,20 @@
 const express = require('express')
+const session = require('express-session')
 
 const app = express()
+
+let sessionOptions = {
+  secret: 'Jumpy fox',
+  resave: false,
+  saveUninitialized: false,
+  name: 'sesId',
+  cookie: {
+    maxAge: 1000 * 60,
+    httpOnly: true
+  }
+}
+
+app.use(session(sessionOptions))
 
 const router = require('./router')
 
@@ -12,4 +26,4 @@ app.use(express.json())
 
 app.use('/', router)
 
-app.listen(3000)
+module.exports = app

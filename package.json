@@ -4,7 +4,7 @@
   "description": "Simplistic social network app",
   "main": "app.js",
   "scripts": {
-    "watch": "nodemon app",
+    "watch": "nodemon db",
     "test": "test"
   },
   "repository": {
@@ -44,7 +44,7 @@
     "jsonwebtoken": "^8.5.1",
     "marked": "^2.0.1",
     "md5": "^2.3.0",
-    "mongodb": "^3.6.3",
+    "mongodb": "3.7.2",
     "nodemon": "^2.0.7",
     "sanitize-html": "^2.3.1",
     "socket.io": "^3.1.0",
