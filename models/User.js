@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const validator = require('validator')
-const usersCollection = require('../db').collection('users')
+const usersCollection = require('../db').db().collection('users')
+const md5 = require('md5')
 
 let User = function(data) {
   this.data = data,
@@ -19,7 +20,7 @@ User.prototype.cleanUp = function() {
   }
 }
 
-User.prototype.validate = function() {
+User.prototype.validate = async function() {
   if (this.data.username == "") {this.errors.push("You must provide a username.")}
   if (this.data.username != "" && !validator.isAlphanumeric(this.data.username)) {this.errors.push("Username can only contain letters and numbers.")}
   if (!validator.isEmail(this.data.email)) {this.errors.push("You must provide a valid email address.")}
@@ -28,6 +29,16 @@ User.prototype.validate = function() {
   if (this.data.password.length > 50) {this.errors.push("Password cannot exceed 50 characters.")}
   if (this.data.username.length > 0 && this.data.username.length < 3) {this.errors.push("Username must be at least 3 characters.")}
   if (this.data.username.length > 30) {this.errors.push("Username cannot exceed 30 characters.")}
+
+  if(this.data.username.length > 2 && this.data.username.length < 31 && validator.isAlphanumeric(this.data.username)) {
+    let usernameExists = await usersCollection.findOne({username: this.data.username})
+    if(usernameExists) this.errors.push('Username is already taken.')
+  }
+
+  if(validator.isEmail(this.data.email)) {
+    let emailExists = await usersCollection.findOne({email: this.data.email})
+    if(emailExists) this.errors.push('This email is already being used.')
+  }
 }
 
 User.prototype.login = function() {
@@ -38,6 +49,8 @@ User.prototype.login = function() {
     usersCollection.findOne({username: this.data.username})
     .then(attemptedUser => {
       if(attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)) {
+        this.data = attemptedUser
+        this.getAvatar()
         resolve('Congratssss!')
       } else {
         reject(new Error('Wrong username / password'))
@@ -49,14 +62,20 @@ User.prototype.login = function() {
   })
 }
 
-User.prototype.register = function() {
+User.prototype.register = async function() {
   this.cleanUp()
-  this.validate()
+  await this.validate()
 
   if(!this.errors.length) {
     this.data.password = bcrypt.hashSync(this.data.password, 10)
-    usersCollection.insertOne(this.data)
-  }
+    await usersCollection.insertOne(this.data)
+    this.getAvatar()
+    return this.data
+  } else {return this.errors}
+}
+
+User.prototype.getAvatar = function() {
+  this.data.avatar = `https://www.gravatar.com/avatar/${md5(this.data.email)}?s=128`
 }
 
 module.exports = User

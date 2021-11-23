@@ -1,12 +1,16 @@
 const express = require('express')
 const session = require('express-session')
+const MongoStore = require('connect-mongo')(session)
+const flash = require('connect-flash')
 
 const app = express()
 
 let sessionOptions = {
   secret: 'Jumpy fox',
+  store: new MongoStore({client: require('./db')}),
   resave: false,
   saveUninitialized: false,
+  rolling: true,
   name: 'sesId',
   cookie: {
     maxAge: 1000 * 60,
@@ -15,6 +19,7 @@ let sessionOptions = {
 }
 
 app.use(session(sessionOptions))
+app.use(flash())
 
 const router = require('./router')
 

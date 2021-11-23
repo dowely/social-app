@@ -5,27 +5,43 @@ exports.login = function(req, res) {
 
   user.login()
     .then((msg) => {
-      req.session.user = {}
-      res.send(msg)
+      req.session.user = {username: user.data.username, avatar: user.data.avatar}
+      req.session.save(function() {
+        res.redirect('/')
+      })
     })
-    .catch((err) => res.send(err.message))
+    .catch((err) => {
+      req.flash('errors', err.message)
+      req.session.save(() => {
+        res.redirect('/')
+      })
+    })
+}
+
+exports.logout = function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/')
+  })
 }
 
 exports.home = function(req, res) {
-  console.log(req.session)
   if(req.session.user) {
-    res.send('Welcome aboard')
+    res.render('home-dashboard', {username: req.session.user.username, avatar: req.session.user.avatar})
   } else {
-    res.render('home-guest')
+    res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')})
   }
 }
 
-exports.register = function(req, res) {
+exports.register = async function(req, res) {
   let user = new User(req.body)
-  user.register()
-  if(user.errors.length) {
-    res.send(user.errors)
+  let result = await user.register()
+  if(Array.isArray(result)) {
+    req.flash('regErrors', result)
+    req.session.save(function() {
+      res.redirect('/')
+    })
   } else {
-    res.send("Congrats")
+    req.session.user = {username: result.username, avatar: result.avatar}
+    res.redirect('/')
   }
 }
