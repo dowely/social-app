@@ -13,13 +13,18 @@ let sessionOptions = {
   rolling: true,
   name: 'sesId',
   cookie: {
-    maxAge: 1000 * 60,
+    maxAge: 1000 * 60 * 60,
     httpOnly: true
   }
 }
 
 app.use(session(sessionOptions))
 app.use(flash())
+
+app.use(function(req, res, next) {
+  res.locals.user = req.session.user
+  next()
+})
 
 const router = require('./router')
 
