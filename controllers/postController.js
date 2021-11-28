@@ -18,9 +18,18 @@ exports.create = function(req, res) {
 
 exports.viewSingle = async function(req, res) {
   try {
-    let post = await Post.getPostById(req.params.id)
+    let post = await Post.getPostById(req.params.id, req.visitorId)
     res.render('single-post-screen', {post: post})
   } catch {
-    res.send('404 page will go here')
+    res.render('404')
+  }
+}
+
+exports.viewEditPost = async function(req, res) {
+  try {
+    let post = await Post.getPostById(req.params.id)
+    res.render('edit-post', {post: post})
+  } catch {
+    res.render('404')
   }
 }

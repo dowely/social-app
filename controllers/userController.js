@@ -1,3 +1,4 @@
+const Post = require('../models/Post')
 const User = require('../models/User')
 
 exports.isLoggedIn = function(req, res, next) {
@@ -17,7 +18,6 @@ exports.login = function(req, res) {
   user.login()
     .then((msg) => {
       req.session.user = {username: user.data.username, avatar: user.data.avatar, _id: user.data._id}
-      console.log(this)
       req.session.save(function() {
         res.redirect('/')
       })
@@ -56,4 +56,24 @@ exports.register = async function(req, res) {
     req.session.user = {username: result.username, avatar: result.avatar, _id: result._id}
     res.redirect('/')
   }
+}
+
+exports.ifExists = function(req, res, next) {
+  User.findByUsername(req.params.username)
+    .then((userProfile) => {
+      req.userProfile = userProfile
+      next()
+    })
+    .catch(() => res.render('404'))
+}
+
+exports.viewProfilePosts = function(req, res) {
+  Post.findPostsByUserId(req.userProfile._id)
+    .then((posts) => {
+      res.render('profile-posts', {
+        profile: req.userProfile,
+        posts: posts
+      })
+    })
+    .catch((e) => res.send(e))
 }

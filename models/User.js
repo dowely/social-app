@@ -3,9 +3,11 @@ const validator = require('validator')
 const usersCollection = require('../db').db().collection('users')
 const md5 = require('md5')
 
-let User = function(data) {
+let User = function(data, getavatar) {
   this.data = data,
   this.errors = []
+
+  if(getavatar) this.getAvatar()
 }
 
 User.prototype.cleanUp = function() {
@@ -76,6 +78,28 @@ User.prototype.register = async function() {
 
 User.prototype.getAvatar = function() {
   this.data.avatar = `https://www.gravatar.com/avatar/${md5(this.data.email)}?s=128`
+}
+
+User.findByUsername = function(username) {
+  return new Promise((resolve, reject) => {
+    if(typeof username != 'string') {
+      reject()
+      return
+    }
+
+    usersCollection.findOne({username: username})
+      .then((document) => {
+        let user = new User(document, true)
+        userProfile = {
+          _id: user.data._id,
+          username: user.data.username,
+          avatar: user.data.avatar
+        }
+        resolve(userProfile)
+      })
+      .catch(() => reject())
+
+  })
 }
 
 module.exports = User

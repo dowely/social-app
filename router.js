@@ -18,4 +18,8 @@ router.post('/create-post', userController.isLoggedIn, postController.create)
 
 router.get('/posts/:id', postController.viewSingle)
 
+router.get('/posts/:id/edit', postController.viewEditPost)
+
+router.get('/profile/:username', userController.ifExists, userController.viewProfilePosts)
+
 module.exports = router
