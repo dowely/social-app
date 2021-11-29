@@ -18,7 +18,11 @@ router.post('/create-post', userController.isLoggedIn, postController.create)
 
 router.get('/posts/:id', postController.viewSingle)
 
-router.get('/posts/:id/edit', postController.viewEditPost)
+router.get('/posts/:id/edit', userController.isLoggedIn, postController.viewEditPost)
+
+router.post('/posts/:id/edit', userController.isLoggedIn, postController.edit)
+
+router.post('/posts/:id/delete', userController.isLoggedIn, postController.delete)
 
 router.get('/profile/:username', userController.ifExists, userController.viewProfilePosts)
 

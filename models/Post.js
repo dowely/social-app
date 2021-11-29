@@ -1,12 +1,14 @@
 const postCollection = require('../db').db().collection('posts')
 const ObjectId = require('mongodb').ObjectId
 const User = require('./User')
+const sanitizeHtml = require('sanitize-html')
 
-const Post = function(data, userid) {
+const Post = function(data, userid, requestedPostId) {
 
   this.data = data
   this.errors = []
   this.userid = userid
+  this.requestedPostId = requestedPostId
 
 }
 
@@ -16,8 +18,8 @@ Post.prototype.cleanUp = function() {
   if(typeof this.data.body != 'string') this.data.body = ''
 
   this.data = {
-    title: this.data.title.trim(),
-    body: this.data.body.trim(),
+    title: sanitizeHtml(this.data.title.trim(), {allowedTags: [], allowedAttributes: {}}),
+    body: sanitizeHtml(this.data.body.trim(), {allowedTags: [], allowedAttributes: {}}),
     createDate: new Date(),
     author: new ObjectId(this.userid)
   }
@@ -38,7 +40,7 @@ Post.prototype.create = function() {
     this.validate()
     if(!this.errors.length) {
       postCollection.insertOne(this.data)
-        .then(() => resolve())
+        .then((info) => resolve(info.ops[0]._id))
         .catch(() => {
           this.errors.push('Server hiccups')
           reject(this.errors)
@@ -46,6 +48,39 @@ Post.prototype.create = function() {
     } else {
       reject(this.errors)
     }
+  })
+}
+
+Post.prototype.update = function() {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.getPostById(this.requestedPostId, this.userid)
+      if(post.isViewerTheAuthor) {
+        this.cleanUp()
+        this.validate()
+        if(this.errors.length) resolve(this.errors)
+        this.actuallyUpdate().then(() => {
+          resolve('success')
+        }).catch(() => {
+          reject('We could not save the post. Please try again later.')
+        })
+      } else {
+        reject('You do not have permission to update that post')
+      }
+    } catch {
+      reject('There is no post with that id.')
+    }
+  })
+}
+
+Post.prototype.actuallyUpdate = function() {
+  return new Promise ((resolve, reject) => {
+    postCollection.findOneAndUpdate(
+      {_id: new ObjectId(this.requestedPostId)},
+      {$set: {title: this.data.title, body: this.data.body}}
+    )
+    .then(() => resolve())
+    .catch(() => reject())
   })
 }
 
@@ -134,6 +169,22 @@ Post.findPostsByUserId = function(authorId) {
       resolve(posts)
     })
     .catch((e) => reject(e))
+  })
+}
+
+Post.delete = function(postId, visitorId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.getPostById(postId, visitorId)
+      if(post.isViewerTheAuthor) {
+        await postCollection.deleteOne({_id: new ObjectId(post._id)})
+        resolve()
+      } else {
+        reject()
+      }
+    } catch {
+      reject()
+    }
   })
 }
 

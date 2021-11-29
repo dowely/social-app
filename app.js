@@ -2,6 +2,8 @@ const express = require('express')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')(session)
 const flash = require('connect-flash')
+const markedDown = require('marked')
+const sanitizeHtml = require('sanitize-html')
 
 const app = express()
 
@@ -30,6 +32,15 @@ app.use(function(req, res, next) {
   }
 
   res.locals.user = req.session.user
+  res.locals.errors = req.flash('errors')
+  res.locals.success = req.flash('success')
+
+  res.locals.filteredHtml = function(content) {
+    return sanitizeHtml(markedDown(content), {
+      allowedTags: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'ul', 'li', 'strong', 'em', 'br'],
+      allowedAttributes: {}
+    })
+  }
   next()
 })
 
