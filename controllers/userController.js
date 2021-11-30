@@ -1,5 +1,6 @@
 const Post = require('../models/Post')
 const User = require('../models/User')
+const Follow = require('../models/Follow')
 
 exports.isLoggedIn = function(req, res, next) {
   if(req.session.user) {
@@ -72,8 +73,16 @@ exports.viewProfilePosts = function(req, res) {
     .then((posts) => {
       res.render('profile-posts', {
         profile: req.userProfile,
-        posts: posts
+        posts: posts,
+        isFollowing: req.isFollowing
       })
     })
     .catch((e) => res.send(e))
+}
+
+exports.userSharedData = async function(req, res, next) {
+  let isFollowing = false
+  isFollowing = await Follow.isUserFollowed(req.userProfile._id, req.visitorId)
+  req.isFollowing = isFollowing
+  next()
 }

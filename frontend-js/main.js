@@ -1,3 +1,5 @@
 import Search from './modules/Search'
 
-new Search()
+if(document.querySelector('.header-search-icon')) {
+  new Search()
+}

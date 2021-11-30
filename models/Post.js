@@ -127,8 +127,8 @@ Post.getPostById = function(id, visitorId) {
   })
 }
 
-Post.getPostsQuery = function(query) {
-  return new Promise((resolve, reject) => {
+Post.getPostsQuery = function(query, lastOperation = []) {
+  return new Promise(async (resolve, reject) => {
 
     let aggPipeline = query.concat([
       {$lookup: {
@@ -143,11 +143,11 @@ Post.getPostsQuery = function(query) {
         createDate: 1,
         author: {$arrayElemAt: ['$authorDocument', 0]}
       }}
-    ])
+    ]).concat(lastOperation)
 
-    postCollection.aggregate(aggPipeline).toArray()
-      .then((posts) => resolve(posts))
-      .catch((e) => reject(e))
+    let posts = await postCollection.aggregate(aggPipeline).toArray()
+
+    resolve(posts)
   })
 }
 
@@ -183,6 +183,28 @@ Post.delete = function(postId, visitorId) {
         reject()
       }
     } catch {
+      reject()
+    }
+  })
+}
+
+Post.search = function(searchTerm) {
+  return new Promise(async (resolve, reject) => {
+    if(typeof searchTerm == 'string') {
+      let posts = await Post.getPostsQuery(
+        [{$match: {$text: {$search: searchTerm}}}],
+        [{$sort: {score: {$meta: 'textScore'}}}]
+      )
+
+      posts.map(post => {
+        post.author = {
+          username: post.author.username,
+          avatar: new User(post.author, true).data.avatar
+        }
+      })
+
+      resolve(posts)
+    } else {
       reject()
     }
   })

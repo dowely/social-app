@@ -70,3 +70,9 @@ exports.delete = function(req, res) {
       req.session.save(() => res.redirect('/'))
     })
 }
+
+exports.search = function(req, res) {
+  Post.search(req.body.searchTerm).then(data => {
+    res.json(data)
+  }).catch(() => {res.json([])})
+}

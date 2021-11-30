@@ -3,6 +3,7 @@ const router = express.Router()
 
 const userController = require('./controllers/userController')
 const postController = require('./controllers/postController')
+const followController = require('./controllers/followController')
 
 router.get('/', userController.home)
 
@@ -24,6 +25,10 @@ router.post('/posts/:id/edit', userController.isLoggedIn, postController.edit)
 
 router.post('/posts/:id/delete', userController.isLoggedIn, postController.delete)
 
-router.get('/profile/:username', userController.ifExists, userController.viewProfilePosts)
+router.post('/search', postController.search)
+
+router.get('/profile/:username', userController.ifExists, userController.userSharedData, userController.viewProfilePosts)
+
+router.post('/add-follow/:username', userController.isLoggedIn, followController.addFollow)
 
 module.exports = router
