@@ -210,4 +210,43 @@ Post.search = function(searchTerm) {
   })
 }
 
+Post.countPostsByAuthor = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let postCount = await postCollection.countDocuments({
+      author: id
+    })
+    resolve(postCount)
+  })
+}
+
+Post.getPostsByAuthorsArray = function(authors) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let authorIdObjects = authors.map(author => {
+        return author._id
+      })
+      let posts = await Post.getPostsQuery(
+      [
+        {$match: {author: {$in: authorIdObjects}}}
+      ],
+      [
+        {$sort: {createDate: -1}}
+      ])
+
+      posts = posts.map(post => {
+        return {
+          _id: post._id,
+          authorAvatar: new User(post.author, true).data.avatar,
+          title: post.title,
+          authorName: post.author.username,
+          createDate: post.createDate
+        }
+      })
+      resolve(posts)
+    } catch {
+      reject()
+    }
+  })
+}
+
 module.exports = Post
