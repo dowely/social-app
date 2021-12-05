@@ -17,6 +17,10 @@ router.get('/create-post', userController.isLoggedIn, postController.viewCreateP
 
 router.post('/create-post', userController.isLoggedIn, postController.create)
 
+router.post('/doesUsernameExist', userController.doesUsernameExist)
+
+router.post('/doesEmailExist', userController.doesEmailExist)
+
 router.get('/posts/:id', postController.viewSingle)
 
 router.get('/posts/:id/edit', userController.isLoggedIn, postController.viewEditPost)

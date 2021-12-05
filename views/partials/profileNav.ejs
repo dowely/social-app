@@ -3,10 +3,12 @@
   <% if(user && !isAuthor) {
       if(!isFollowing) { %>
         <form class="ml-2 d-inline" action="/add-follow/<%= profile.username %>" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button class="btn btn-primary btn-sm">Follow <i class="fas fa-user-plus"></i></button>
         </form>
       <% } else { %>
         <form class="ml-2 d-inline" action="/remove-follow/<%= profile.username %>" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button class="btn btn-danger btn-sm">Stop Following <i class="fas fa-user-times"></i></button>
         </form>
      <%  }

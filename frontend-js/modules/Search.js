@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 
 export default class Search{
   constructor() {
+    this._csrf = document.querySelector('[name="_csrf"]').value
     this.injectHtml()
     this.searchIcon = document.querySelector('.header-search-icon')
     this.closeIcon = document.querySelector('.close-live-search')
@@ -54,7 +55,7 @@ export default class Search{
   }
 
   sendRequest() {
-    axios.post('/search', {searchTerm: this.inputField.value}).then(response => {
+    axios.post('/search', {_csrf: this._csrf, searchTerm: this.inputField.value}).then(response => {
       console.log(response.data)
       this.renderResultsHtml(response.data)
     }).catch((err) => {
