@@ -2,6 +2,7 @@ const Post = require('../models/Post')
 const User = require('../models/User')
 const Follow = require('../models/Follow')
 const ObjectId = require('mongodb').ObjectId
+const jwt = require('jsonwebtoken')
 
 exports.isLoggedIn = function(req, res, next) {
   if(req.session.user) {
@@ -12,7 +13,16 @@ exports.isLoggedIn = function(req, res, next) {
       res.redirect('/')
     })
   }
-} 
+}
+
+exports.apiMustBeLoggedIn = function(req, res, next) {
+  try {
+    req.apiUser = jwt.verify(req.body.token, process.env.JWTSECRET)
+    next()
+  } catch {
+    res.json("You must provide a valid token to perform this acction")
+  }
+}
 
 exports.login = function(req, res) {
   let user = new User(req.body)
@@ -29,6 +39,18 @@ exports.login = function(req, res) {
       req.session.save(() => {
         res.redirect('/')
       })
+    })
+}
+
+exports.apiLogin = function(req, res) {
+  let user = new User(req.body)
+
+  user.login()
+    .then((msg) => {
+      res.json(jwt.sign({_id: user.data._id}, process.env.JWTSECRET, {expiresIn: '7d'}))
+    })
+    .catch((err) => {
+      res.json('Your credentials are incorrect')
     })
 }
 
@@ -160,5 +182,15 @@ exports.doesEmailExist = async function(req, res) {
     }
   } catch {
     res.json(true)
+  }
+}
+
+exports.apiGetPostsByUsername = async function(req, res) {
+  try {
+    let userDoc = await User.findByUsername(req.params.username)
+    let posts = await Post.findPostsByUserId(userDoc._id)
+    res.json(posts)
+  } catch {
+    res.json("This username does not exist")
   }
 }

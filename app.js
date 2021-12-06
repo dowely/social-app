@@ -8,6 +8,11 @@ const csrf = require('csurf')
 
 const app = express()
 
+app.use(express.urlencoded({extended: false}))
+app.use(express.json())
+
+app.use('/api', require('./api-router'))
+
 let sessionOptions = {
   secret: 'Jumpy fox',
   store: new MongoStore({client: require('./db')}),
@@ -50,8 +55,6 @@ const router = require('./router')
 app.set('views', 'views')
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
-app.use(express.urlencoded({extended: false}))
-app.use(express.json())
 
 app.use(csrf())
 app.use(function(req, res, next) {
